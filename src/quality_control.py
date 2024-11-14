@@ -53,7 +53,7 @@ def filter_input_data():
                 {
                     "uuid": image["uuid"],
                     "image_url": image["image_url"],
-                    "topic": image["topic"],
+                    "theme": image["theme"],
                     "status": "Approve",
                 }
             )

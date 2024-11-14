@@ -41,6 +41,9 @@ def vote():
     data = request.json
     image_index = data["index"]
     vote_type = data["vote_type"]
+    if images[image_index].get("votes") is None:
+        images[image_index]["votes"] = 0
+
     if vote_type == "upvote":
         images[image_index]["votes"] += 1
     elif vote_type == "downvote":
@@ -71,7 +74,7 @@ def upload():
 
 
 if __name__ == "__main__":
-    images = json.loads(open("data/filtered-images.json").read())
+    images = json.loads(open("data/raw-data.json").read())
     with app.app_context():
         interval = 5
         threading.Thread(
