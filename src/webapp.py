@@ -33,7 +33,7 @@ def index():
 def get_images():
     topic = request.args.get("topic")
     if topic:
-        filtered_images = [image for image in images if image["topic"] == topic]
+        filtered_images = [image for image in images if image["theme"] == topic]
     else:
         filtered_images = images
     return jsonify(filtered_images)
