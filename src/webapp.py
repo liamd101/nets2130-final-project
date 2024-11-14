@@ -10,18 +10,15 @@ from quality_control import meets_tos
 app = Flask(__name__)
 
 
-def periodic_save():
+def save_images(images, interval):
     while True:
-        with app.test_client() as client:
-            client.get("/save")
-        time.sleep(15)  # Save every 5 minutes
-
-
-@app.route("/save")
-def save_images():
-    with open("data/images.json", "w") as f:
-        json.dump(images, f, indent=4)
-    return jsonify({"status": "success"})
+        images.sort(key=lambda x: x["votes"], reverse=True)
+        for image in images:
+            if len(image["uuid"]) < 1:
+                image["uuid"] = str(uuid.uuid4())
+        with open("data/filtered-images.json", "w") as f:
+            json.dump(images, f, indent=4)
+        time.sleep(interval)
 
 
 @app.route("/feed")
@@ -75,4 +72,14 @@ def upload():
 
 if __name__ == "__main__":
     images = json.loads(open("data/filtered-images.json").read())
+    with app.app_context():
+        interval = 5
+        threading.Thread(
+            target=save_images,
+            args=(
+                images,
+                interval,
+            ),
+            daemon=True,
+        ).start()
     app.run(debug=True, port=8000)
