@@ -4,6 +4,18 @@ MemoryMosaic is a digital platform allowing users to create collaborative visual
 
 ---
 
+## Data and Code Paths
+
+- Raw Data: data/raw-data.json
+- Sample Input for Quality Control: data/quality-control-input.json
+- Sample Output for Quality Control: data/quality-control-output.json
+- Sample Input for Aggregation: data/raw-data.json
+- Sample Output for Aggregation: data/filtered-images.json
+- Code for Quality Control: src/quality_control.py
+- Code for Aggregation: src/webapp.py
+
+---
+
 ## User Interface Overview
 
 - **Sign In**: Users can log in using email, Google, or Apple accounts.
