@@ -18,13 +18,13 @@ interface MosaicItemProps {
 
 const MosaicItem = ({ item, size }: MosaicItemProps) => {
   const sizeClasses = {
-    small: 'col-span-1 row-span-1',
-    medium: 'col-span-2 row-span-2',
-    large: 'col-span-3 row-span-3'
+    small: 'col-span-2 row-span-2',
+    medium: 'col-span-4 row-span-4',
+    large: 'col-span-6 row-span-6'
   };
 
   return (
-    <div className={`relative group ${sizeClasses[size]} aspect-square overflow-hidden rounded-lg`}>
+    <div className={`relative group ${sizeClasses[size]} overflow-hidden rounded-lg min-h-[200px]`}>
       <Image
         src={sampleImage}
         alt={`Image ${item.id}`}
@@ -45,10 +45,10 @@ const MosaicItem = ({ item, size }: MosaicItemProps) => {
 
 const ImageMosaic = () => {
   const [images] = React.useState<ImageItem[]>(
-    Array.from({ length: 6 }, (_, i) => ({
+    Array.from({ length: 20 }, (_, i) => ({
       id: i + 1,
       src: sampleImage,
-      upvotes: [150, 50, 300, 200, 75, 250][i]
+      upvotes: Math.floor(Math.random() * 300) // Random upvotes for variety
     }))
   );
 
@@ -62,16 +62,18 @@ const ImageMosaic = () => {
   };
 
   return (
-    <div className="grid grid-cols-6 auto-rows-fr gap-4 p-4">
-      {images
-        .sort((a, b) => b.upvotes - a.upvotes)
-        .map(image => (
-          <MosaicItem
-            key={image.id}
-            item={image}
-            size={getImageSize(image.upvotes)}
-          />
-        ))}
+    <div className="container mx-auto p-4">
+      <div className="grid grid-cols-12 auto-rows-[100px] gap-4">
+        {images
+          .sort((a, b) => b.upvotes - a.upvotes)
+          .map(image => (
+            <MosaicItem
+              key={image.id}
+              item={image}
+              size={getImageSize(image.upvotes)}
+            />
+          ))}
+      </div>
     </div>
   );
 };
