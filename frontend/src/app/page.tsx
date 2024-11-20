@@ -346,13 +346,44 @@ const EnhancedOrbs = () => {
   );
 };
 
+const AnimatedWord = ({ text }: { text: string }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      className="inline-block cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      initial={false}
+      animate={{
+        scale: isHovered ? 1.1 : 1,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 500,
+        damping: 30,
+        duration: 0.1
+      }}
+    >
+      <span 
+        className={`text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500
+          ${isHovered ? 'drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]' : ''}`}
+        style={{
+          transition: 'filter 0.1s ease'
+        }}
+      >
+        {text}
+      </span>
+    </motion.div>
+  );
+};
+
 const LandingText = () => {
   const containerVariants = {
     hidden: {},
     show: {
       transition: {
-        staggerChildren: 0.8,
-        delayChildren: 0.3,
+        staggerChildren: 0.3,
       },
     },
   };
@@ -361,90 +392,54 @@ const LandingText = () => {
     hidden: { 
       opacity: 0, 
       y: 20,
-      filter: "blur(10px)",
     },
     show: { 
       opacity: 1, 
       y: 0,
-      filter: "blur(0px)",
       transition: {
-        duration: 0.8,
+        duration: 0.3,
         ease: "easeOut",
       },
     },
   };
 
   const textLines = [
-    {
-      text: "make memories",
-      className: "bg-gradient-to-r from-purple-500 to-blue-500",
-    },
-    {
-      text: "post them",
-      className: "bg-gradient-to-r from-blue-400 to-purple-400",
-    },
-    {
-      text: "share the experience",
-      className: "bg-gradient-to-r from-purple-300 to-blue-300",
-    },
+    "make memories",
+    "post them",
+    "share the experience"
   ];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] relative z-10">
-      {/* Glowing backdrop for text */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-blue-500/5 blur-3xl" />
-      
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="flex flex-col items-center space-y-6"
+        className="flex flex-col items-center space-y-12"
       >
         {textLines.map((line, index) => (
           <motion.div
             key={index}
             variants={textVariants}
-            className="relative group"
           >
-            {/* Glowing underline */}
-            <motion.div
-              className="absolute -bottom-2 left-0 w-0 h-[2px] group-hover:w-full transition-all duration-500"
-              style={{
-                background: line.className,
-                boxShadow: "0 0 10px rgba(147,51,234,0.5)",
-              }}
-            />
-            
-            {/* Main text */}
-            <h1 
-              className={`text-6xl font-bold tracking-tight bg-clip-text text-transparent ${line.className}`}
-              style={{
-                textShadow: "0 0 20px rgba(147,51,234,0.3)",
-              }}
-            >
-              {line.text}
-            </h1>
-
-            {/* Hover effect overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-purple-500/0 opacity-0 group-hover:opacity-100 blur transition-opacity duration-500" />
+            <AnimatedWord text={line} />
           </motion.div>
         ))}
 
-        {/* Optional CTA Button */}
         <motion.button
           variants={textVariants}
-          className="mt-12 px-8 py-3 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 hover:border-purple-500/50 text-purple-400 hover:text-purple-300 transition-all duration-300 backdrop-blur-sm group"
+          className="mt-8 px-8 py-3 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-200 backdrop-blur-sm group"
           whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <span className="relative z-10">Get Started</span>
-          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur" />
+          <span className="relative z-10 text-purple-300 group-hover:text-purple-200">
+            Get Started
+          </span>
         </motion.button>
       </motion.div>
     </div>
   );
 };
-
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-black overflow-hidden">
