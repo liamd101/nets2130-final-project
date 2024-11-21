@@ -7,6 +7,8 @@ import Header from "./components/header";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FloatingActionButton from "./components/function-button";
+import { useRouter } from "next/navigation";
+
 
 const ParticleEffect = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -430,7 +432,10 @@ const AnimatedWord = ({ text }: { text: string }) => {
   );
 };
 
+
 const LandingText = () => {
+  const router = useRouter();
+
   const containerVariants = {
     hidden: {},
     show: {
@@ -458,7 +463,7 @@ const LandingText = () => {
   const textLines = [
     "make memories",
     "post them",
-    "share the experience"
+    "share the experience",
   ];
 
   return (
@@ -470,10 +475,7 @@ const LandingText = () => {
         className="flex flex-col items-center space-y-12"
       >
         {textLines.map((line, index) => (
-          <motion.div
-            key={index}
-            variants={textVariants}
-          >
+          <motion.div key={index} variants={textVariants}>
             <AnimatedWord text={line} />
           </motion.div>
         ))}
@@ -483,6 +485,7 @@ const LandingText = () => {
           className="mt-8 px-8 py-3 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-200 backdrop-blur-sm group"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
+          onClick={() => router.push("/create-event")}
         >
           <span className="relative z-10 text-purple-300 group-hover:text-purple-200">
             Get Started
@@ -492,6 +495,7 @@ const LandingText = () => {
     </div>
   );
 };
+
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-black overflow-hidden">

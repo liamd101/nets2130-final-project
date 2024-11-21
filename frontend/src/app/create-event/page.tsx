@@ -1,116 +1,34 @@
 "use client";
 
-import { useLoadScript, GoogleMap, Marker } from "@react-google-maps/api";
-import usePlacesAutocomplete, {
-  getGeocode,
-  getLatLng,
-} from "use-places-autocomplete";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Image as ImageIcon, Search } from "lucide-react";
+import { Calendar, MapPin, Users } from "lucide-react";
 import Header from "../components/header";
 import { EnhancedOrbs } from "../components/enhanced-orbs";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 
 interface EventFormData {
-  name: string;
   date: string;
   location: string;
-  coordinates: { lat: number; lng: number } | null;
-  coverImage: string | null;
+  attendees: number;
+  description: string;
 }
-
-interface LocationSearchProps {
-  setFormData: React.Dispatch<React.SetStateAction<EventFormData>>;
-  formData: EventFormData;
-}
-
-const LocationSearch = ({ setFormData, formData }: LocationSearchProps) => {
-  const {
-    ready,
-    value,
-    suggestions: { status, data },
-    setValue,
-    clearSuggestions,
-  } = usePlacesAutocomplete();
-
-  const handleSelect = async (address: string) => {
-    setValue(address, false);
-    clearSuggestions();
-
-    try {
-      const results = await getGeocode({ address });
-      const { lat, lng } = await getLatLng(results[0]);
-      setFormData({
-        ...formData,
-        location: address,
-        coordinates: { lat, lng }
-      });
-    } catch (error) {
-      console.error("Error: ", error);
-    }
-  };
-
-  return (
-    <div className="relative">
-      <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-purple-400" />
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        disabled={!ready}
-        className="w-full px-12 py-3 rounded-lg bg-black/40 border border-purple-500/30 focus:border-purple-500/50 text-purple-200 placeholder-purple-400/50 backdrop-blur-sm outline-none"
-        placeholder="Search for a location..."
-      />
-      {status === "OK" && (
-        <ul className="absolute w-full mt-1 bg-black/90 border border-purple-500/30 rounded-lg overflow-hidden z-50">
-          {data.map(({ place_id, description }) => (
-            <li
-              key={place_id}
-              onClick={() => handleSelect(description)}
-              className="px-4 py-2 hover:bg-purple-500/20 cursor-pointer text-purple-300"
-            >
-              {description}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
 
 const CreateEventPage = () => {
+  const [events, setEvents] = useState<EventFormData[]>([]);
   const [formData, setFormData] = useState<EventFormData>({
-    name: "",
     date: "",
     location: "",
-    coordinates: null,
-    coverImage: null
+    attendees: 0,
+    description: "",
   });
-  
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ["places"],
-  });
-
-  const mapCenter = useMemo(() => 
-    formData.coordinates || { lat: 40.7128, lng: -74.0060 }, 
-    [formData.coordinates]
-  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData({ ...formData, coverImage: e.target?.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleAddEvent = () => {
+    setEvents((prev) => [formData, ...prev]);
+    setFormData({ date: "", location: "", attendees: 0, description: "" });
   };
-
-  if (!isLoaded) return <div>Loading...</div>;
 
   return (
     <div className="relative min-h-screen bg-black">
@@ -127,17 +45,6 @@ const CreateEventPage = () => {
           </motion.h1>
 
           <div className="space-y-8">
-            {/* Event Name */}
-            <div className="space-y-2">
-              <label className="text-purple-300">Event Name</label>
-              <input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg bg-black/40 border border-purple-500/30 focus:border-purple-500/50 text-purple-200 placeholder-purple-400/50 backdrop-blur-sm outline-none"
-                placeholder="Enter event name"
-              />
-            </div>
-
             {/* Event Date */}
             <div className="space-y-2">
               <label className="text-purple-300">Event Date</label>
@@ -146,84 +53,107 @@ const CreateEventPage = () => {
                 <input
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                   className="w-full px-12 py-3 rounded-lg bg-black/40 border border-purple-500/30 focus:border-purple-500/50 text-purple-200 backdrop-blur-sm outline-none"
                 />
               </div>
             </div>
 
-            {/* Location with Map */}
+            {/* Location */}
             <div className="space-y-2">
               <label className="text-purple-300">Location</label>
-              <LocationSearch setFormData={setFormData} formData={formData} />
-              <div className="h-64 w-full rounded-lg overflow-hidden mt-2">
-                <GoogleMap
-                  zoom={14}
-                  center={mapCenter}
-                  mapContainerClassName="w-full h-full"
-                  options={{
-                    styles: [
-                      {
-                        featureType: "all",
-                        elementType: "all",
-                        stylers: [
-                          { saturation: -100 },
-                          { lightness: -20 }
-                        ]
-                      }
-                    ]
-                  }}
-                >
-                  {formData.coordinates && (
-                    <Marker position={formData.coordinates} />
-                  )}
-                </GoogleMap>
-              </div>
+              <input
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                placeholder="e.g., Central Park, NYC"
+                className="w-full px-4 py-3 rounded-lg bg-black/40 border border-purple-500/30 text-purple-200 placeholder-purple-400/50 focus:border-purple-500/50 backdrop-blur-sm outline-none"
+              />
             </div>
 
-            {/* Cover Image Upload */}
+            {/* Attendees */}
             <div className="space-y-2">
-              <label className="text-purple-300">Cover Image</label>
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="relative w-full h-64 rounded-lg border-2 border-dashed border-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer overflow-hidden group"
-              >
-                {formData.coverImage ? (
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={formData.coverImage}
-                      alt="Cover"
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <p className="text-white">Change Image</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-purple-400">
-                    <ImageIcon className="w-12 h-12 mb-2" />
-                    <p>Click to upload cover image</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
+              <label className="text-purple-300">Attendees</label>
+              <input
+                type="number"
+                value={formData.attendees}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    attendees: parseInt(e.target.value) || 0,
+                  })
+                }
+                placeholder="Number of attendees"
+                className="w-full px-4 py-3 rounded-lg bg-black/40 border border-purple-500/30 text-purple-200 placeholder-purple-400/50 focus:border-purple-500/50 backdrop-blur-sm outline-none"
+              />
             </div>
 
-            {/* Submit Button */}
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-purple-300">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Enter event description"
+                className="w-full px-4 py-3 rounded-lg bg-black/40 border border-purple-500/30 text-purple-200 placeholder-purple-400/50 focus:border-purple-500/50 backdrop-blur-sm outline-none"
+              />
+            </div>
+
+            {/* Add Event Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleAddEvent}
               className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold hover:from-purple-600 hover:to-blue-600 transition-colors"
             >
-              Create Event
+              Add Event
             </motion.button>
+          </div>
+
+          {/* Event Cards */}
+          <div className="space-y-4 mt-12">
+            {events.map((event, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative p-6 rounded-lg bg-black/20 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/20 transition-colors group"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-purple-300">
+                    <Calendar className="w-4 h-4" />
+                    <span>{event.date}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-purple-300">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-purple-300">
+                    <Users className="w-4 h-4" />
+                    <span>{event.attendees} attending</span>
+                  </div>
+                  <p className="text-gray-400 mt-2">{event.description}</p>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full mt-4 py-2 px-4 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/30 text-purple-300 hover:text-purple-200 transition-colors"
+                  >
+                    Join Event
+                  </motion.button>
+                </div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-500/50 group-hover:text-purple-500/70 transition-colors">
+                  <motion.div whileHover={{ x: 5 }} className="text-2xl">
+                    →
+                  </motion.div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
