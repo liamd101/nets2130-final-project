@@ -6,8 +6,18 @@ import ImageMosaic from "./components/mosaic";
 import Header from "./components/header";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import FloatingActionButton from "./components/function-button";
 
 const ParticleEffect = () => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+  }, []);
+
   return (
     <div className="absolute inset-0 opacity-50">
       {[...Array(50)].map((_, i) => (
@@ -15,8 +25,8 @@ const ParticleEffect = () => {
           key={i}
           className="absolute w-1 h-1 bg-purple-500/20"
           initial={{ 
-            x: Math.random() * window.innerWidth, 
-            y: Math.random() * window.innerHeight,
+            x: Math.random() * dimensions.width, 
+            y: Math.random() * dimensions.height,
             scale: 0
           }}
           animate={{ 
@@ -128,6 +138,25 @@ const InteractiveCorners = () => {
 };
 
 const FloatingOrbs = () => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       {/* Large primary orb */}
@@ -138,8 +167,8 @@ const FloatingOrbs = () => {
           filter: "blur(40px)",
         }}
         animate={{
-          x: [-200, window.innerWidth],
-          y: [-200, window.innerHeight],
+          x: [-200, dimensions.width],
+          y: [-200, dimensions.height],
           scale: [1, 1.2, 1],
         }}
         transition={{
@@ -160,8 +189,8 @@ const FloatingOrbs = () => {
             filter: "blur(30px)",
           }}
           animate={{
-            x: [i * 300, window.innerWidth - i * 200],
-            y: [i * 200, window.innerHeight - i * 300],
+            x: [i * 300, dimensions.width - i * 200],
+            y: [i * 200, dimensions.height - i * 300],
             scale: [1, 1.1, 1],
           }}
           transition={{
@@ -184,8 +213,8 @@ const FloatingOrbs = () => {
             filter: "blur(20px)",
           }}
           animate={{
-            x: [i * 100, window.innerWidth - i * 150],
-            y: [i * 150, window.innerHeight - i * 100],
+            x: [i * 100, dimensions.width - i * 150],
+            y: [i * 150, dimensions.height - i * 100],
             scale: [1, 1.3, 1],
           }}
           transition={{
@@ -204,6 +233,25 @@ const FloatingOrbs = () => {
   );
 };
 const EnhancedOrbs = () => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       {/* Primary large orb */}
@@ -215,8 +263,8 @@ const EnhancedOrbs = () => {
           boxShadow: "0 0 80px rgba(147,51,234,0.3)",
         }}
         animate={{
-          x: [-400, window.innerWidth - 400],
-          y: [-400, window.innerHeight - 400],
+          x: [-400, dimensions.width - 400],
+          y: [-400, dimensions.height - 400],
           scale: [1, 1.2, 1],
         }}
         transition={{
@@ -236,8 +284,8 @@ const EnhancedOrbs = () => {
           boxShadow: "0 0 60px rgba(59,130,246,0.3)",
         }}
         animate={{
-          x: [window.innerWidth, -200],
-          y: [window.innerHeight, -200],
+          x: [dimensions.width, -200],
+          y: [dimensions.height, -200],
           scale: [1, 1.3, 1],
         }}
         transition={{
@@ -272,8 +320,8 @@ const EnhancedOrbs = () => {
             }`,
           }}
           animate={{
-            x: [i * 300 - 200, window.innerWidth - (i * 300 + 200)],
-            y: [i * 200 - 200, window.innerHeight - (i * 200 + 200)],
+            x: [i * 300 - 200, dimensions.width - (i * 300 + 200)],
+            y: [i * 200 - 200, dimensions.height - (i * 200 + 200)],
             scale: [1, 1.4, 1],
           }}
           transition={{
@@ -303,12 +351,12 @@ const EnhancedOrbs = () => {
           }}
           animate={{
             x: [
-              Math.random() * window.innerWidth,
-              Math.random() * window.innerWidth
+              Math.random() * dimensions.width,
+              Math.random() * dimensions.width
             ],
             y: [
-              Math.random() * window.innerHeight,
-              Math.random() * window.innerHeight
+              Math.random() * dimensions.height,
+              Math.random() * dimensions.height
             ],
             scale: [1, 1.5, 1],
             opacity: [0.4, 0.7, 0.4],
@@ -451,6 +499,7 @@ export default function Home() {
       <InteractiveCorners />
       <FloatingOrbs />
       <EnhancedOrbs />
+      <FloatingActionButton />
 
       {/* Content */}
       <div className="relative z-10 grid grid-rows-[auto_1fr_auto] min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">

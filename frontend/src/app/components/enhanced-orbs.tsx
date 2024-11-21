@@ -2,7 +2,18 @@
 
 import { motion } from "framer-motion";
 
+import { useEffect, useState } from 'react';
+
 export const EnhancedOrbs = () => {
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        setDimensions({
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+    }, []);
+
     return (
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Primary large orb */}
@@ -14,8 +25,8 @@ export const EnhancedOrbs = () => {
             boxShadow: "0 0 80px rgba(147,51,234,0.3)",
           }}
           animate={{
-            x: [-400, window.innerWidth - 400],
-            y: [-400, window.innerHeight - 400],
+            x: [-400, dimensions.width - 400],
+            y: [-400, dimensions.height - 400],
             scale: [1, 1.2, 1],
           }}
           transition={{
@@ -35,8 +46,8 @@ export const EnhancedOrbs = () => {
             boxShadow: "0 0 60px rgba(59,130,246,0.3)",
           }}
           animate={{
-            x: [window.innerWidth, -200],
-            y: [window.innerHeight, -200],
+            x: [dimensions.width, -200],
+            y: [dimensions.height, -200],
             scale: [1, 1.3, 1],
           }}
           transition={{
@@ -71,8 +82,8 @@ export const EnhancedOrbs = () => {
               }`,
             }}
             animate={{
-              x: [i * 300 - 200, window.innerWidth - (i * 300 + 200)],
-              y: [i * 200 - 200, window.innerHeight - (i * 200 + 200)],
+              x: [i * 300 - 200, dimensions.width - (i * 300 + 200)],
+              y: [i * 200 - 200, dimensions.height - (i * 200 + 200)],
               scale: [1, 1.4, 1],
             }}
             transition={{
@@ -102,12 +113,12 @@ export const EnhancedOrbs = () => {
             }}
             animate={{
               x: [
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth
+                Math.random() * dimensions.width,
+                Math.random() * dimensions.width
               ],
               y: [
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight
+                Math.random() * dimensions.height,
+                Math.random() * dimensions.height
               ],
               scale: [1, 1.5, 1],
               opacity: [0.4, 0.7, 0.4],

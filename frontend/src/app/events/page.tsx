@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Calendar, MapPin, Users } from "lucide-react";
 import Header from "../components/header";
 import {EnhancedOrbs} from "../components/enhanced-orbs";
+import FloatingActionButton from "../components/function-button";
 
 interface Event {
   id: number;
@@ -86,6 +87,7 @@ const EventsPage = () => {
   return (
     <div className="relative min-h-screen bg-black">
       <EnhancedOrbs />
+      <FloatingActionButton />
       <div className="relative z-10">
         <Header />
         <div className="container mx-auto px-4 py-12 max-w-3xl">
