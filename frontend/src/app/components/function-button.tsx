@@ -6,21 +6,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const FloatingActionButton = () => {
-  const menuVariants = {
-    open: { opacity: 1, y: 0 },
-    closed: { opacity: 0, y: 20 }
-  };
-
-  const itemVariants = {
-    open: { opacity: 1, y: 0 },
-    closed: { opacity: 0, y: 10 }
-  };
-
-  const buttonVariants = {
-    open: { rotate: 45 },
-    closed: { rotate: 0 }
-  };
-
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   let closeTimeout: NodeJS.Timeout;
@@ -37,8 +22,42 @@ const FloatingActionButton = () => {
   };
 
   const handleCreateEvent = () => {
-    router.push('/create-event'); 
+    router.push('/create-event');
     setIsOpen(false);
+  };
+
+  const handleUploadToEvent = () => {
+    router.push('/upload-image');
+    setIsOpen(false);
+  };
+
+  const buttonVariants = {
+    open: { rotate: 45 },
+    closed: { rotate: 0 }
+  };
+
+  const menuVariants = {
+    open: { 
+      opacity: 1,
+      y: 0,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    },
+    closed: { 
+      opacity: 0,
+      y: 20,
+      transition: {
+        staggerChildren: 0.1,
+        staggerDirection: -1
+      }
+    }
+  };
+
+  const itemVariants = {
+    open: { opacity: 1, y: 0 },
+    closed: { opacity: 0, y: 20 }
   };
 
   return (
@@ -59,7 +78,7 @@ const FloatingActionButton = () => {
             <motion.button
               variants={itemVariants}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 hover:border-purple-500/50 backdrop-blur-sm text-purple-300 hover:text-purple-200 whitespace-nowrap"
-              onClick={() => {/* Handle upload */}}
+              onClick={handleUploadToEvent}
             >
               <Upload className="w-4 h-4" />
               <span>Upload to Event</span>

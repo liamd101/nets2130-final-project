@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, MessageCircle, Send } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -17,139 +17,56 @@ interface Comment {
 }
 
 interface InlineVoteSystemProps {
-  initialVotes?: number;
-  initialComments?: Comment[];
-  onVoteChange?: (newVotes: number) => void;
-  onCommentAdd?: (comment: Comment) => void;
+  initialVotes: number;
 }
 
-const InlineVoteSystem = ({ 
-  initialVotes = 0, 
-  initialComments = [],
-  onVoteChange,
-  onCommentAdd
-}: InlineVoteSystemProps) => {
+const InlineVoteSystem: React.FC<InlineVoteSystemProps> = ({ initialVotes }) => {
   const [votes, setVotes] = useState(initialVotes);
-  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
-  const [comments, setComments] = useState<Comment[]>(initialComments);
-  const [newComment, setNewComment] = useState('');
+  const [userVote, setUserVote] = useState<'like' | 'dislike' | null>(null);
 
-  const handleVote = (type: 'up' | 'down') => {
-    let newVotes = votes;
-    
-    if (userVote === type) {
-      newVotes = votes + (type === 'up' ? -1 : 1);
-      setVotes(newVotes);
+  const handleLike = () => {
+    if (userVote === 'like') {
+      setVotes(prev => prev - 1);
       setUserVote(null);
     } else {
-      newVotes = votes + (
-        type === 'up' 
-          ? (userVote === 'down' ? 2 : 1) 
-          : (userVote === 'up' ? -2 : -1)
-      );
-      setVotes(newVotes);
-      setUserVote(type);
+      if (userVote === 'dislike') {
+        setVotes(prev => prev - 1);
+      }
+      setVotes(prev => prev + 1);
+      setUserVote('like');
     }
-
-    onVoteChange?.(newVotes);
   };
 
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      const newCommentObj = {
-        id: Date.now(),
-        text: newComment,
-        timestamp: new Date().toLocaleString()
-      };
-      
-      setComments([...comments, newCommentObj]);
-      setNewComment('');
-      onCommentAdd?.(newCommentObj);
+  const handleDislike = () => {
+    if (userVote === 'dislike') {
+      setVotes(prev => prev - 1);
+      setUserVote(null);
+    } else {
+      if (userVote === 'like') {
+        setVotes(prev => prev - 1);
+      }
+      setVotes(prev => prev + 1);
+      setUserVote('dislike');
     }
   };
 
   return (
-    <div className="inline-flex items-center h-8">
-      {/* Like/Dislike Group */}
-      <div className="inline-flex items-center gap-1">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => handleVote('up')}
-          className={`h-8 w-8 p-0 ${userVote === 'up' ? 'text-green-500' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <ThumbsUp className="h-4 w-4" />
-        </Button>
-        
-        <span className="text-sm font-medium min-w-[1.5rem] text-center">{votes}</span>
-        
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => handleVote('down')}
-          className={`h-8 w-8 p-0 ${userVote === 'down' ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <ThumbsDown className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="flex items-center gap-4">
+      <button 
+        onClick={handleLike}
+        className={`flex items-center gap-1 ${userVote === 'like' ? 'text-green-500' : ''}`}
+      >
+        <ThumbsUp size={16} />
+        <span>{votes}</span>
+      </button>
 
-      {/* Comment Section - Separated with margin */}
-      <div className="ml-6">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-12 p-0 text-gray-500 hover:text-gray-700"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span className="ml-1 text-sm">{comments.length}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-2">
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="h-8 text-sm"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') handleAddComment();
-                  }}
-                />
-                <Button 
-                  size="sm"
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim()}
-                  className="h-8 px-2"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {comments.map(comment => (
-                  <div 
-                    key={comment.id} 
-                    className="p-2 bg-gray-100 rounded text-sm"
-                  >
-                    <p>{comment.text}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {comment.timestamp}
-                    </p>
-                  </div>
-                ))}
-                {comments.length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-2">
-                    No comments yet
-                  </p>
-                )}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+      <button 
+        onClick={handleDislike}
+        className={`flex items-center gap-1 ${userVote === 'dislike' ? 'text-red-500' : ''}`}
+      >
+        <ThumbsDown size={16} />
+        <span>{votes}</span>
+      </button>
     </div>
   );
 };

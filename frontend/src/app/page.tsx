@@ -65,38 +65,61 @@ const CyberGrid = () => {
 };
 
 const GlowingOrbs = () => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full"
+        className="absolute w-[400px] h-[400px] rounded-full opacity-30"
         style={{
-          background: "radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(147,51,234,0.3) 0%, transparent 70%)",
+          filter: "blur(40px)",
         }}
         animate={{
-          x: [-200, window.innerWidth],
-          y: [-200, window.innerHeight],
+          x: [-200, dimensions.width],
+          y: [-200, dimensions.height],
         }}
         transition={{
           duration: 20,
           repeat: Infinity,
           repeatType: "reverse",
-          ease: "linear"
+          ease: "easeInOut",
         }}
       />
+      
       <motion.div
-        className="absolute w-[300px] h-[300px] rounded-full"
+        className="absolute w-[300px] h-[300px] rounded-full opacity-20"
         style={{
-          background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)",
+          filter: "blur(30px)",
         }}
         animate={{
-          x: [window.innerWidth, -200],
-          y: [window.innerHeight, -200],
+          x: [dimensions.width, -200],
+          y: [dimensions.height, -200],
         }}
         transition={{
-          duration: 15,
+          duration: 25,
           repeat: Infinity,
           repeatType: "reverse",
-          ease: "linear"
+          ease: "easeInOut",
+          delay: 2,
         }}
       />
     </div>
@@ -104,38 +127,19 @@ const GlowingOrbs = () => {
 };
 
 const ScanLines = () => (
-  <div className="absolute inset-0 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPgo8ZGVmcz4KPHBhdHRlcm4gaWQ9InNjYW5saW5lIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIyIj4KPGxpbmUgeDE9IjAiIHkxPSIxIiB4Mj0iMTAwJSIgeTI9IjEiIHN0cm9rZT0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjwvc2F0dGVybj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3NjYW5saW5lKSIvPgo8L3N2Zz4=')] opacity-20" />
+  <div className="fixed inset-0 pointer-events-none">
+    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px]" />
+  </div>
 );
 
-const InteractiveCorners = () => {
-  return (
-    <>
-      <motion.div
-        className="absolute top-0 right-0 w-32 h-32 border-t-2 border-r-2 border-purple-500/20"
-        animate={{
-          opacity: [0.2, 0.5, 0.2],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-0 left-0 w-32 h-32 border-b-2 border-l-2 border-blue-500/20"
-        animate={{
-          opacity: [0.2, 0.5, 0.2],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "linear",
-          delay: 1,
-        }}
-      />
-    </>
-  );
-};
+const InteractiveCorners = () => (
+  <div className="fixed inset-0 pointer-events-none">
+    <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-purple-500/10" />
+    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/10" />
+    <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-500/10" />
+    <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-blue-500/10" />
+  </div>
+);
 
 const FloatingOrbs = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -228,7 +232,7 @@ const FloatingOrbs = () => {
       ))}
 
       {/* Overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/50 to-black" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black" />
     </div>
   );
 };
