@@ -6,26 +6,76 @@ MemoryMosaic is a digital platform allowing users to create collaborative visual
 
 ## Data and Code Paths
 
-- Raw Data: data/raw-data.json
-- Sample Input for Quality Control: data/quality-control-input.json
-- Sample Output for Quality Control: data/quality-control-output.json
-- Sample Input for Aggregation: data/raw-data.json
-- Sample Output for Aggregation: data/filtered-images.json
-- Code for Quality Control: src/quality_control.py
-- Code for Aggregation: src/webapp.py
+- Raw Data: `data/raw-data.json`
+- Sample Input for Quality Control: `data/quality-control-input.json`
+- Sample Output for Quality Control: `data/quality-control-output.json`
+- Sample Input for Aggregation: `data/raw-data.json`
+- Sample Output for Aggregation: `data/filtered-images.json`
+- Code for Quality Control: `src/quality_control.py`
+- Code for Aggregation: `src/webapp.py`
 
 ---
 
 ## User Interface Overview
 
 - **Sign In**: Users can log in using email, Google, or Apple accounts.
-- **Recents Feed**: A feed displaying recent uploads from events, allowing users to engage with images.
-- **For You**: Personalized recommendations based on user interests and activity.
+- **Events**: A feed displaying upcoming events.
+- **My Mosaics**: A personalized page where users can view, manage, and revisit the mosaics they've created or contributed to.
 - **Mosaic**: An interactive map and mosaic display that showcases aggregated, high-quality images based on location or theme.
 
 ---
 
-The project has five main components, each with a designated complexity rating based on the estimated work required for implementation. The total project complexity is 17 points.
+## How to Contribute as Part of the Crowd
+
+MemoryMosaic uses crowdsourcing to enhance the quality and diversity of its visual "memory boards." Here’s how you can contribute to the project without directly coding:
+
+### Step 1: **Interact with Uploaded Images**
+- Visit the mosaics to explore recently uploaded pictures.
+- Contribute by **liking** (upvoting) or **disliking** (downvoting) images.  
+  - Upvoted images are prioritized for inclusion in the final mosaic.
+  - Downvoted images are flagged for review and may be excluded based on quality or relevance.
+
+### Step 2: **Submit Your Own Pictures**
+- Upload high-quality images.  
+  - Add descriptive metadata to your submissions, such as location, time, and event name, to help with aggregation.
+  - Ensure your images follow platform guidelines (e.g., no inappropriate content, clear and relevant visuals).
+
+### Step 3: **Participate in Community Reviews**
+- Join discussions or polls for selecting the best images or themes for specific mosaics.
+- Provide feedback on why certain images should or should not be included. This feedback helps improve the Quality Control system.
+
+### Step 4: **Promote the Project**
+- Share MemoryMosaic with friends, classmates, or on social media to expand participation.
+- Encourage others to upload pictures and interact with the mosaic boards.
+
+### Step 5: **Suggest Themes and Features**
+- Submit suggestions for new themes, such as specific decades, locations, or types of events.
+- Provide ideas for new features to improve the platform, such as additional filters or interaction tools.
+
+### Step 6: **Test and Provide Feedback**
+- Test the platform by interacting with different components, such as uploading pictures, liking/disliking content, and navigating mosaics.
+- Report any issues or suggest improvements to enhance user experience.
+
+---
+
+## Code Execution Guide
+
+### How to Run the Code
+- **Frontend**:
+   - Navigate to the `frontend` folder.
+   - Run the development server:
+     ```bash
+     npm run dev
+     # or
+     yarn dev
+     # or
+     pnpm dev
+     # or
+     bun dev
+     ```
+   - Open [http://localhost:3000](http://localhost:3000) with your browser to see the project.
+
+---
 
 ## Components
 
@@ -80,6 +130,18 @@ The Display component shows the final interactive mosaic. Users can zoom in, int
 - Design an interactive mosaic display with zoom and interaction features.
 - Implement image exploration options for users.
 - Optimize the display for performance and mobile compatibility.
+
+---
+## Planned Analysis
+
+- **Image Quality**:  
+  Check uploaded images for duplicates and low-quality content. Use metadata to match images to themes and ensure they follow upload rules.
+
+- **Community Engagement**:  
+  Track likes and dislikes to see user preferences. Identify mosaics with the most engagement to guide future recommendations.
+
+- **Mosaic Composition**:  
+  Review how images are arranged in mosaics to ensure a fair mix of themes, locations, and events. Highlight top-voted images using upvote counts and metadata.
 
 ---
 
