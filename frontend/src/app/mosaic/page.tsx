@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import NextImage from 'next/image';
+import { useEffect, useState, useRef } from 'react';
 import InlineVoteSystem from '../components/upvote';
-import Image from 'next/image';
-
+import ImagePopup from '../components/image-popup';
 import img1 from '../images/img1.jpeg';
 import img2 from '../images/img2.jpeg';
 import img3 from '../images/img3.jpeg';
@@ -37,145 +37,174 @@ import img37 from '../images/img37.jpeg';
 import img38 from '../images/img38.jpeg';
 import img39 from '../images/img39.jpeg';
 
-interface ImageItem {
+interface Image {
     id: number;
-    src: any;
+    url: string;
     upvotes: number;
-    aspectRatio: number;
-    size?: { cols: number; rows: number };
+    position?: { x: number; y: number };
+    width?: number;
+    height?: number;
+    rotation?: number;
 }
 
-const ImageMosaic = () => {
-    const [images, setImages] = useState<ImageItem[]>([]);
-    const containerRef = useRef<HTMLDivElement>(null);
+const ImageGallery: React.FC = () => {
+    const [images, setImages] = useState<Image[]>([]);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-
-    const calculateOptimalLayout = (images: ImageItem[], containerWidth: number, containerHeight: number): ImageItem[] => {
-        const totalImages = images.length;
-        const aspectRatio = containerWidth / containerHeight;
-        
-        // Calculate the ideal number of columns and rows
-        const idealCols = Math.max(1, Math.round(Math.sqrt(totalImages * aspectRatio)));
-        const idealRows = Math.max(1, Math.ceil(totalImages / idealCols));
-        
-        const cellWidth = containerWidth / idealCols;
-        const cellHeight = containerHeight / idealRows;
-
-        // Sort images by upvotes
-        const sortedImages = [...images].sort((a, b) => b.upvotes - a.upvotes);
-        
-        let grid: (ImageItem | null)[][] = Array(idealRows).fill(null).map(() => Array(idealCols).fill(null));
-        
-        sortedImages.forEach((img, index) => {
-            const row = Math.floor(index / idealCols);
-            const col = index % idealCols;
-            
-            let size = { cols: 1, rows: 1 };
-            
-            // Check if we can expand this image
-            if (img.upvotes > sortedImages[Math.floor(totalImages * 0.2)].upvotes) {
-                if (row < idealRows - 1 && col < idealCols - 1 && !grid[row][col + 1] && !grid[row + 1][col] && !grid[row + 1][col + 1]) {
-                    size = { cols: 2, rows: 2 };
-                    grid[row][col + 1] = grid[row + 1][col] = grid[row + 1][col + 1] = img;
-                } else if (col < idealCols - 1 && !grid[row][col + 1]) {
-                    size = { cols: 2, rows: 1 };
-                    grid[row][col + 1] = img;
-                }
-            }
-            
-            grid[row][col] = { ...img, size };
-        });
-        
-        return grid.flat().filter((img): img is ImageItem => img !== null);
-    };
+    const [selectedImage, setSelectedImage] = useState<Image | null>(null);
 
     useEffect(() => {
-        const predefinedUpvotes = [
-            282, 156, 298, 145, 267, 134, 201, 178, 289, 142,
-            234, 167, 254, 123, 265, 187, 213, 159, 245, 176,
-            200, 190, 180, 170, 160, 150, 140, 130, 120, 110,
-            100, 90, 80
-        ];
-
-        const imageArray = [
-            img1, img2, img3, img4, img5, img6, img8, img9, img10, img11, img12, img13, img14, img16, img17, img18, img19, img20, img21, img24, img25, img26, img27, img28, img30, img31, img33, img34, img35, img37, img38, img39
-        ];
-
-        Promise.all(
-            imageArray.map((src, index) => new Promise<ImageItem>((resolve) => {
-                // Explicitly type the image object
-                const img: HTMLImageElement = Object.assign(document.createElement('img'), {
-                    onload: function(this: HTMLImageElement) {
-                        resolve({
-                            id: index + 1,
-                            src,
-                            upvotes: predefinedUpvotes[index],
-                            aspectRatio: this.width / this.height,
-                        });
-                    }
-                });
-                img.src = src.src;
-            }))
-        ).then(loadedImages => {
-            setImages(loadedImages);
-        });
-    }, []);
-
-    useEffect(() => {
-        const updateContainerSize = () => {
-            if (containerRef.current) {
-                const { width, height } = containerRef.current.getBoundingClientRect();
-                setContainerSize({ width, height });
-            }
+        const handleResize = () => {
+            setContainerSize({ width: window.innerWidth, height: window.innerHeight });
         };
 
-        updateContainerSize();
-        window.addEventListener('resize', updateContainerSize);
-        return () => window.removeEventListener('resize', updateContainerSize);
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     useEffect(() => {
-        if (containerSize.width > 0 && containerSize.height > 0) {
-            setImages(prevImages => calculateOptimalLayout(prevImages, containerSize.width, containerSize.height));
+        if (containerSize.width > 0 && containerSize.height > 0 && images.length > 0) {
+            const sortedImages = [...images].sort((a, b) => b.upvotes - a.upvotes);
+            const centerX = containerSize.width / 2;
+            const centerY = containerSize.height / 2;
+            const maxUpvotes = sortedImages[0].upvotes;
+            const minUpvotes = sortedImages[sortedImages.length - 1].upvotes;
+            
+            const maxSize = Math.min(containerSize.width, containerSize.height) * 0.35;
+            const minSize = maxSize * 0.25;
+
+            const layoutImages = sortedImages.map((img, index) => {
+                const goldenRatio = (1 + Math.sqrt(5)) / 2;
+                const theta = index * goldenRatio * Math.PI * 1.5;
+                
+                const spiralRadius = Math.sqrt(index) * (maxSize * 0.25);
+                
+                const sizeMultiplier = (img.upvotes - minUpvotes) / (maxUpvotes - minUpvotes);
+                const baseSize = minSize + (maxSize - minSize) * sizeMultiplier;
+                
+                const randomOffset = Math.random() * 20 - 10;
+                const x = centerX + Math.cos(theta) * (spiralRadius + randomOffset);
+                const y = centerY + Math.sin(theta) * (spiralRadius + randomOffset);
+                
+                const rotation = (Math.random() - 0.5) * 15;
+
+                return {
+                    ...img,
+                    width: baseSize,
+                    height: baseSize,
+                    position: {
+                        x: x - baseSize / 2,
+                        y: y - baseSize / 2
+                    },
+                    rotation
+                };
+            });
+
+            setImages(layoutImages);
         }
     }, [containerSize]);
 
+    useEffect(() => {
+        const images = [
+            { id: 1, url: img1.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 2, url: img2.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 3, url: img3.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 4, url: img4.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 5, url: img5.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 6, url: img6.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 7, url: img8.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 8, url: img9.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 9, url: img10.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 10, url: img11.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 11, url: img12.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 12, url: img13.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 13, url: img14.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 14, url: img16.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 15, url: img17.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 16, url: img18.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 17, url: img19.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 18, url: img20.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 19, url: img21.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 20, url: img24.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 21, url: img25.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 22, url: img26.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 23, url: img27.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 24, url: img28.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 25, url: img30.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 26, url: img31.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 27, url: img33.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 28, url: img34.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 29, url: img35.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 30, url: img37.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 31, url: img38.src, upvotes: Math.floor(Math.random() * 100) },
+            { id: 32, url: img39.src, upvotes: Math.floor(Math.random() * 100) } 
+        ];
+        setImages(images);
+    }, []);
+
+    const handleImageClick = (event: React.MouseEvent, image: Image) => {
+        if (!(event.target as HTMLElement).closest('.voting-system')) {
+            setSelectedImage(image);
+        }
+    };
+
+    const handleClosePopup = () => {
+        setSelectedImage(null);
+    };
+
     return (
-        <div ref={containerRef} className="w-full p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {images.map(image => (
+        <div className="relative w-full h-screen overflow-hidden bg-black">
+            {images.map((img) => (
+                <div
+                    key={img.id}
+                    className="absolute transition-all duration-300 ease-out cursor-pointer group"
+                    style={{
+                        left: img.position?.x,
+                        top: img.position?.y,
+                        width: img.width,
+                        height: img.height,
+                        zIndex: Math.floor(img.upvotes),
+                    }}
+                    onClick={(e) => handleImageClick(e, img)}
+                >
                     <div
-                        key={image.id}
-                        className="relative group overflow-hidden rounded-lg cursor-pointer"
+                        className="w-full h-full transition-all duration-300 ease-out group-hover:scale-125 group-hover:z-50"
                         style={{
-                            aspectRatio: '16/9',  // Force landscape aspect ratio
+                            transform: `rotate(${img.rotation}deg)`,
+                            transformOrigin: 'center center',
                         }}
                     >
-                        <div className="relative w-full h-full">
-                            <Image
-                                src={image.src}
-                                alt={`Image ${image.id}`}
-                                className="object-cover"
-                                fill
-                                quality={100}
-                                sizes="(max-width: 768px) 100vw, 
-                                       (max-width: 1024px) 50vw, 
-                                       (max-width: 1536px) 33vw,
-                                       25vw"
-                            />
-                        </div>
-                        
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <div className="flex items-center justify-center text-white">
-                                <InlineVoteSystem initialVotes={image.upvotes} />
-                            </div>
+                        <NextImage
+                            src={img.url}
+                            alt={`Image ${img.id}`}
+                            className="rounded-lg object-cover shadow-lg"
+                            fill
+                            sizes="(max-width: 768px) 100vw, 
+                                   (max-width: 1024px) 50vw, 
+                                   (max-width: 1536px) 33vw,
+                                   25vw"
+                        />
+                    </div>
+                    <div 
+                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-b-lg voting-system"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-center text-white">
+                            <InlineVoteSystem initialVotes={img.upvotes} />
                         </div>
                     </div>
-                ))}
-            </div>
+                </div>
+            ))}
+            {selectedImage && (
+                <ImagePopup
+                    src={selectedImage.url}
+                    alt={`Image ${selectedImage.id}`}
+                    onClose={handleClosePopup}
+                />
+            )}
         </div>
     );
 };
 
-export default ImageMosaic;
-
+export default ImageGallery;
