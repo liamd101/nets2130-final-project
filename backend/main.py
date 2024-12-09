@@ -8,7 +8,6 @@ from datetime import datetime
 from bson import ObjectId
 import os
 import boto3
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 import dotenv
 
 dotenv.load_dotenv()
@@ -30,6 +29,7 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client.mosaic
 users_collection = db.users
 events_collection = db.events
+images_collection = db.images
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -58,6 +58,24 @@ class User(BaseModel):
     auth_id: str
     email: str
     name: Optional[str] = None
+    registered_events: list
+
+
+class Event(BaseModel):
+    event_id: str
+    owner_id: str
+    event_name: str
+    images: list
+    event_date: str
+    event_location: str
+
+
+class Image(BaseModel):
+    event_id: str
+    user_id: str
+    image_url: str
+    created_at: Optional[datetime] = None
+    upvotes: dict = {}
 
 
 @app.get("/")
@@ -77,42 +95,149 @@ async def signup(user_id: str, email: str, name: str):
     if not name:
         name = email.split("@")[0]
     # create user in mongo
-    if user_id not in users_collection:
-        users_collection.insert_one({"auth_id": user_id, "email": email, "name": name})
+    existing_user = await users_collection.find_one({"auth_id": user_id})
+    if not existing_user:
+        users_collection.insert_one(
+            {
+                "auth_id": user_id,
+                "email": email,
+                "name": name,
+                "registered_events": [],
+            }
+        )
 
 
 @app.post("/api/events/create")
 async def create_event(
-    event_id: str, user_id: str, event_name: str, event_date: str, event_location: str
+    event_id: str,
+    user_id: str,
+    event_name: str,
+    event_date: str,
+    event_location: str,
 ):
-    events_collection.insert_one(
-        {
-            "event_id": event_id,
-            "user_id": user_id,
-            "event_name": event_name,
-            "event_date": event_date,
-            "event_location": event_location,
-        }
+    # Validate user
+    user_data = await users_collection.find_one({"auth_id": user_id})
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Create the event
+    event = Event(
+        event_id=event_id,
+        owner_id=user_id,
+        event_name=event_name,
+        images=[],
+        event_date=event_date,
+        event_location=event_location,
     )
 
+    events_collection.insert_one(event.dict())
 
-@app.post("/upload")
-async def upload_image(image: UploadFile = File(...)):
-    try:
-        file_content = await image.read()
-        key = f"images/{image.filename}"
-        s3_client.put_object(
-            Bucket=BUCKET_NAME,
-            Key=key,
-            Body=file_content,
-            ContentType=image.content_type,
+
+@app.post("/api/image/upload")
+async def upload_image(user_id: str, event_id: str, image: UploadFile = File(...)):
+    # Validate user
+    user_data = await users_collection.find_one({"auth_id": user_id})
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = User(**user_data)
+
+    # Validate if the user is registered for the event
+    if event_id not in user.registered_events:
+        raise HTTPException(
+            status_code=403, detail="User is not registered for this event"
         )
-        file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{key}"
-        return {"message": "Image uploaded successfully", "url": file_url}
-    except (NoCredentialsError, PartialCredentialsError):
-        return {"error": "ASW credentials not found or invalid"}
-    except Exception as e:
-        return {"error": f"an error has occured: {str(e)}"}
+
+    # Validate event
+    event_data = await events_collection.find_one({"event_id": event_id})
+    if not event_data:
+        raise HTTPException(status_code=404, detail="Event not found")
+    event = Event(**event_data)
+
+    # Upload the image to S3
+    file_content = await image.read()
+    s3_key = (
+        f"images/{user_id}/{event_id}/{image.filename.split('/')[-1].split('.')[0]}"
+    )
+
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=s3_key,
+        Body=file_content,
+        ContentType=image.content_type,
+    )
+
+    s3_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{s3_key}"
+
+    # Create an `Image` instance and insert it into the database
+    new_image = Image(
+        event_id=event_id,
+        user_id=user_id,
+        image_url=s3_url,
+        created_at=datetime.utcnow(),
+    )
+    new_image.upvotes[event_id] = 0
+    result = await images_collection.insert_one(new_image.dict())
+    inserted_id = result.inserted_id
+
+    # Update the event with the new image ID
+    event.images.append(str(inserted_id))
+    await events_collection.update_one(
+        {"event_id": event_id}, {"$set": {"images": event.images}}
+    )
+
+    return {"message": "Image uploaded successfully", "image_url": s3_url}
+
+
+@app.post("/api/register")
+async def register_for_event(user_id: str, event_id: str):
+    user_data = await users_collection.find_one({"auth_id": user_id})
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = User(**user_data)
+
+    event_data = await events_collection.find_one({"event_id": event_id})
+    if not event_data:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    if event_id not in user.registered_events:
+        user.registered_events.append(event_id)
+        await users_collection.update_one(
+            {"auth_id": user_id},
+            {"$set": {"registered_events": user.registered_events}},
+        )
+
+    return {"message": f"User {user_id} registered for event {event_id}"}
+
+
+@app.post("/api/image/upvote")
+async def upvote_image(user_id: str, event_id: str, image_id: str):
+    user_data = await users_collection.find_one({"auth_id": user_id})
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = User(**user_data)
+    if event_id not in user.registered_events:
+        raise HTTPException(
+            status_code=403, detail="User is not registered for this event"
+        )
+    event_data = await events_collection.find_one({"event_id": event_id})
+    if not event_data:
+        raise HTTPException(status_code=404, detail="Event not found")
+    event = Event(**event_data)
+
+    if image_id not in event.images:
+        raise HTTPException(status_code=400, detail="Image not in event")
+    image_data = await images_collection.find_one({"_id": ObjectId(image_id)})
+    if not image_data:
+        raise HTTPException(status_code=404, detail="Image not found")
+    image = Image(**image_data)
+
+    image.upvotes[event_id] += 1
+    print(image.upvotes)
+    await images_collection.update_one(
+        {"_id": ObjectId(image_id)}, {"$set": {"upvotes": image.upvotes}}
+    )
+
+    return {"message": "Image upvoted successfully"}
 
 
 @app.post("/api/users/check")
