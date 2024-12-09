@@ -1,3 +1,4 @@
+from botocore.httpchecksum import AwsChunkedWrapper
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,7 +7,22 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 import os
+import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+import dotenv
+
+dotenv.load_dotenv()
 app = FastAPI(title="Event Image API")
+
+BUCKET_NAME = os.getenv("BUCKET_NAME")
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
+
+s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+)
 
 # MongoDB connection
 MONGO_URL = os.getenv("MONGO_URL")
@@ -23,10 +39,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class UserUpdate(BaseModel):
     id: str
     name: str
     updated_at: str
+
 
 # Pydantic model for response
 class UserResponse(BaseModel):
@@ -35,11 +53,11 @@ class UserResponse(BaseModel):
     updated_at: str
     message: str
 
+
 class User(BaseModel):
     auth_id: str
     email: str
     name: Optional[str] = None
-
 
 
 @app.get("/")
@@ -53,6 +71,7 @@ async def read_root():
         "version": "1.0.0",
     }
 
+
 @app.post("/api/users/signup")
 async def signup(user_id: str, email: str, name: str):
     if not name:
@@ -62,32 +81,53 @@ async def signup(user_id: str, email: str, name: str):
         users_collection.insert_one({"auth_id": user_id, "email": email, "name": name})
 
 
-
 @app.post("/api/events/create")
-async def create_event(event_id: str, user_id: str, event_name: str, event_date: str, event_location: str):
-    events_collection.insert_one({"event_id": event_id, "user_id": user_id, "event_name": event_name, "event_date": event_date, "event_location": event_location})
+async def create_event(
+    event_id: str, user_id: str, event_name: str, event_date: str, event_location: str
+):
+    events_collection.insert_one(
+        {
+            "event_id": event_id,
+            "user_id": user_id,
+            "event_name": event_name,
+            "event_date": event_date,
+            "event_location": event_location,
+        }
+    )
 
-@app.get("/upload")
+
+@app.post("/upload")
 async def upload_image(image: UploadFile = File(...)):
-    
-    return {"message": "Image uploaded successfully"}
+    try:
+        file_content = await image.read()
+        key = f"images/{image.filename}"
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=key,
+            Body=file_content,
+            ContentType=image.content_type,
+        )
+        file_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{key}"
+        return {"message": "Image uploaded successfully", "url": file_url}
+    except (NoCredentialsError, PartialCredentialsError):
+        return {"error": "ASW credentials not found or invalid"}
+    except Exception as e:
+        return {"error": f"an error has occured: {str(e)}"}
+
 
 @app.post("/api/users/check")
 async def check_user(auth_id: str, email: str):
     # Check if user exists
     user = await users_collection.find_one({"user_id": auth_id})
-    
+
     if not user:
         # Create new user if not found
-        new_user = {
-            "auth_id": auth_id,
-            "email": email,
-            "created_at": datetime.utcnow()
-        }
+        new_user = {"auth_id": auth_id, "email": email, "created_at": datetime.utcnow()}
         await users_collection.insert_one(new_user)
         return {"message": "User created", "is_new": True}
-    
+
     return {"message": "User exists", "is_new": False}
+
 
 ## required routes - sign up flow for each event, so for each event we need to have a list of users that are part of the event
 ## we need to have a list of events that the user is part of
@@ -98,4 +138,5 @@ async def check_user(auth_id: str, email: str):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
