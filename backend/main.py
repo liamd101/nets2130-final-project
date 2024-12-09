@@ -1,4 +1,3 @@
-from botocore.httpchecksum import AwsChunkedWrapper
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -9,6 +8,7 @@ from bson import ObjectId
 import os
 import boto3
 import dotenv
+from openai import OpenAI
 
 dotenv.load_dotenv()
 app = FastAPI(title="Event Image API")
@@ -168,6 +168,10 @@ async def upload_image(user_id: str, event_id: str, image: UploadFile = File(...
 
     s3_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{s3_key}"
 
+    if flagged(s3_url):
+        s3_client.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
+        return {"message": "Image flagged for inappropriate content"}
+
     # Create an `Image` instance and insert it into the database
     new_image = Image(
         event_id=event_id,
@@ -188,7 +192,18 @@ async def upload_image(user_id: str, event_id: str, image: UploadFile = File(...
     return {"message": "Image uploaded successfully", "image_url": s3_url}
 
 
-@app.post("/api/register")
+def flagged(image_url):
+    client = OpenAI()
+
+    response = client.moderations.create(
+        model="omni-moderation-2024-09-26",
+        input=[{"type": "image_url", "image_url": {"url": image_url}}],
+    )
+
+    return response.results[0].flagged
+
+
+@app.post("/api/event/register")
 async def register_for_event(user_id: str, event_id: str):
     user_data = await users_collection.find_one({"auth_id": user_id})
     if not user_data:
@@ -210,7 +225,12 @@ async def register_for_event(user_id: str, event_id: str):
 
 
 @app.post("/api/image/upvote")
-async def upvote_image(user_id: str, event_id: str, image_id: str):
+async def upvote_image(
+    user_id: str,
+    event_id: str,
+    image_id: str,
+    upvote: bool,
+):
     user_data = await users_collection.find_one({"auth_id": user_id})
     if not user_data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -231,8 +251,10 @@ async def upvote_image(user_id: str, event_id: str, image_id: str):
         raise HTTPException(status_code=404, detail="Image not found")
     image = Image(**image_data)
 
-    image.upvotes[event_id] += 1
-    print(image.upvotes)
+    if upvote:
+        image.upvotes[event_id] += 1
+    else:
+        image.upvotes[event_id] -= 1
     await images_collection.update_one(
         {"_id": ObjectId(image_id)}, {"$set": {"upvotes": image.upvotes}}
     )
