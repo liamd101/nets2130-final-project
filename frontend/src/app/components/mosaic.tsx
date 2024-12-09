@@ -2,8 +2,30 @@
 
 import React from 'react';
 import InlineVoteSystem from './upvote';
-import sampleImage from '../images/sample.png';
 import Image from 'next/image';
+import blossom from '../images/blossom.jpeg';
+
+// Import all images
+import img1 from '../images/img1.jpeg';
+import img2 from '/images/img2.jpeg';
+import img3 from '/images/img3.jpeg';
+import img4 from '../images/img4.jpeg';
+import img5 from '../images/img5.jpeg';
+import img6 from '../images/img6.jpeg';
+import img7 from '../images/img7.jpeg';
+import img8 from '../images/20241117_091929_2881B5.jpeg';
+import img9 from '../images/20241117_091930_2BB798.jpeg';
+import img10 from '../images/20241117_091930_20CC36.jpeg';
+import img11 from '../images/20241117_091930_25B736.jpeg';
+import img12 from '../images/20241117_091931_2E995B.jpeg';
+import img13 from '../images/20241117_091931_2F74DC.jpeg';
+import img14 from '../images/20241117_091931_23EA18.jpeg';
+import img15 from '../images/20241117_091931_28D3E9.jpeg';
+import img16 from '../images/20241117_091932_239E76.jpeg';
+import img17 from '../images/20241117_091933_2E9258.jpeg';
+import img18 from '../images/20241117_091933_214830.jpeg';
+import img19 from '../images/20241117_091936_218A16.jpeg';
+import img20 from '../images/20241117_113040_2D6A57.jpeg';
 
 interface ImageItem {
   id: number;
@@ -30,9 +52,14 @@ const ImageMosaic = () => {
   };
 
   const [images] = React.useState<ImageItem[]>(() => {
-    const initialImages = Array.from({ length: 20 }, (_, i) => ({
+    const imageArray = [
+      img1, img2, img3, img4, img5, img6, img7, img8, img9, img10,
+      img11, img12, img13, img14, img15, img16, img17, img18, img19, img20
+    ];
+    
+    const initialImages = imageArray.map((src, i) => ({
       id: i + 1,
-      src: sampleImage,
+      src,
       upvotes: Math.floor(Math.random() * 300)
     }));
     return calculateSizes(initialImages);
@@ -75,3 +102,4 @@ const ImageMosaic = () => {
 };
 
 export default ImageMosaic;
+

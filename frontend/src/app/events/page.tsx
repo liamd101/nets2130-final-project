@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Header from "../components/header";
 import {EnhancedOrbs} from "../components/enhanced-orbs";
 import FloatingActionButton from "../components/function-button";
@@ -37,6 +40,8 @@ const sampleEvents: Event[] = [
     description: "Experience the neon lights and vibrant nightlife of Tokyo.",
   }
 ];
+
+
 
 const EventCard = ({ event }: { event: Event }) => {
   return (
@@ -84,6 +89,59 @@ const EventCard = ({ event }: { event: Event }) => {
 };
 
 const EventsPage = () => {
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push('/');
+        return;
+      }
+
+      // Check/create user in MongoDB
+      try {
+        const response = await fetch('http://localhost:8000/api/users/check', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            auth_id: session.user.id,
+            email: session.user.email,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to check/create user');
+        }
+
+        const data = await response.json();
+        if (data.is_new) {
+          console.log('New user created in MongoDB');
+        }
+      } catch (error) {
+        console.error('Error checking/creating user:', error);
+      }
+    };
+
+    checkSession();
+
+    // Set up realtime subscription for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.push('/');
+      }
+    });
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router, supabase]);
+
   return (
     <div className="relative min-h-screen bg-black">
       <EnhancedOrbs />
