@@ -7,10 +7,10 @@ from datetime import datetime
 from bson import ObjectId
 import os
 import boto3
-import dotenv
+from dotenv import load_dotenv
 from openai import OpenAI
 
-dotenv.load_dotenv()
+load_dotenv()
 app = FastAPI(title="Event Image API")
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
