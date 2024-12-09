@@ -78,7 +78,7 @@ const ImageGallery: React.FC = () => {
                 const goldenRatio = (1 + Math.sqrt(5)) / 2;
                 const theta = index * goldenRatio * Math.PI * 1.5;
                 
-                const spiralRadius = Math.sqrt(index) * (maxSize * 0.25);
+                const spiralRadius = Math.sqrt(index) * (maxSize * 0.35);
                 
                 const sizeMultiplier = (img.upvotes - minUpvotes) / (maxUpvotes - minUpvotes);
                 const baseSize = minSize + (maxSize - minSize) * sizeMultiplier;
@@ -194,6 +194,7 @@ const ImageGallery: React.FC = () => {
                             <InlineVoteSystem initialVotes={img.upvotes} />
                         </div>
                     </div>
+                    
                 </div>
             ))}
             {selectedImage && (

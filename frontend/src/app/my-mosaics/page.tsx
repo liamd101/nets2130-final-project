@@ -7,9 +7,7 @@ import Header from "../components/header";
 import { EnhancedOrbs } from "../components/enhanced-orbs";
 import InlineVoteSystem from "../components/upvote";
 import { useState } from "react";
-import skyline from "../images/skyline.jpeg";
-import blossom from "../images/blossoms.jpeg";
-import winter from "../images/winter.jpg";
+import img1 from "../images/img1.jpeg";
 import Image from "next/image";
 
 interface MosaicPost {
@@ -127,31 +125,14 @@ const MyMosaicsPage = () => {
   const [mosaics] = useState<MosaicPost[]>([
     {
       id: 1,
-      title: "Winter Memories 2024",
-      date: "Dec 24, 2024",
-      image: winter,
+      title: "Homecoming 2024",
+      date: "Oct 20, 2024",
+      image: img1,
       likes: 124,
       comments: 15,
       shares: 8
     },
-    {
-      id: 2,
-      title: "Summer Festival",
-      date: "July 15, 2024",
-      image: blossom,
-      likes: 89,
-      comments: 12,
-      shares: 5
-    },
-    {
-      id: 3,
-      title: "City Nights",
-      date: "Sep 30, 2024",
-      image: skyline,
-      likes: 256,
-      comments: 34,
-      shares: 21
-    },
+
   ]);
 
   const filteredMosaics = mosaics.filter((mosaic: MosaicPost) => 
